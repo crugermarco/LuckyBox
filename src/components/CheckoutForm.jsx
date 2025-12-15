@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Shield, CreditCard } from 'lucide-react';
-import { stripePromise } from '../lib/stripe';
-import { createCheckoutSession } from '../lib/stripe';
 import { supabase } from '../lib/supabase';
+
+const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
 
 export default function CheckoutForm({ product, onClose }) {
   const [formData, setFormData] = useState({
@@ -14,15 +14,12 @@ export default function CheckoutForm({ product, onClose }) {
     codigoPostal: '',
     cantidad: 1
   });
-  
+
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1); // 1: Info personal, 2: Resumen
+  const [step, setStep] = useState(1);
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -50,25 +47,45 @@ export default function CheckoutForm({ product, onClose }) {
       }
 
       // Crear sesión de checkout
-      const session = await createCheckoutSession(
-        product.id,
-        formData.cantidad,
-        formData
-      );
-
-      // Redirigir a Stripe Checkout
-      const stripe = await stripePromise;
-      const { error } = await stripe.redirectToCheckout({
-        sessionId: session.id,
+      const res = await fetch(`${SUPABASE_FUNCTION_URL}/create-checkout-session`, {
+        method: 'POST',
+        headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ 
+          productId: product.id,
+          cantidad: formData.cantidad,
+          customer: formData
+        }),
       });
 
-      if (error) {
-        throw error;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
       }
 
-    } catch (error) {
-      console.error('Error:', error);
-      alert(`Error al procesar el pago: ${error.message}`);
+      // 🛠️ CAMBIO CLAVE AQUÍ: Extraer la 'url' y redirigir directamente
+      const { url, sessionId } = await res.json();
+
+      // Método 1: Redirigir directamente a la URL de Stripe (RECOMENDADO)
+      if (url) {
+        window.location.href = url;
+        return; // Importante: detener la ejecución aquí
+      }
+      
+      // Método 2: Backup usando sessionId (por si acaso 'url' no viene)
+      if (sessionId) {
+        window.location.href = `https://checkout.stripe.com/pay/${sessionId}`;
+        return;
+      }
+      
+      // Si no hay ni url ni sessionId, lanzar error
+      throw new Error('No se recibió URL de pago válida');
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert(`Error al procesar el pago: ${err.message}`);
       setLoading(false);
     }
   };
@@ -83,121 +100,31 @@ export default function CheckoutForm({ product, onClose }) {
             <h2 className="text-2xl font-bold text-gray-800">
               {step === 1 ? 'Información de Envío' : 'Resumen de Compra'}
             </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full"
-              disabled={loading}
-            >
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full" disabled={loading}>
               <X className="w-6 h-6" />
             </button>
-          </div>
-
-          <div className={`p-4 rounded-2xl mb-6 ${getGradientClass(product.platform)} bg-opacity-10`}>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl">{product.icon}</span>
-              <div>
-                <h3 className="font-bold text-lg">{product.name}</h3>
-                <p className="text-sm text-gray-600">{product.pieces} piezas</p>
-              </div>
-            </div>
-            <div className="text-sm">
-              <p>Precio unitario: <span className="font-bold">${product.price} MXN</span></p>
-              <p>Cantidad: <span className="font-bold">{formData.cantidad}</span></p>
-              <p>Total: <span className="font-bold">${total} MXN</span></p>
-            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
             {step === 1 ? (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre completo *
-                  </label>
-                  <input
-                    type="text"
-                    name="nombre"
-                    value={formData.nombre}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    placeholder="Juan Pérez"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono *
-                  </label>
-                  <input
-                    type="tel"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    placeholder="55 1234 5678"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Correo electrónico *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    placeholder="correo@ejemplo.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Dirección completa *
-                  </label>
-                  <input
-                    type="text"
-                    name="direccion"
-                    value={formData.direccion}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    placeholder="Calle, número, colonia"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                {/* Campos de información del cliente */}
+                {['nombre','telefono','email','direccion','ciudad','codigoPostal'].map((field) => (
+                  <div key={field}>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Ciudad *
+                      {field === 'nombre' ? 'Nombre completo *' : field.charAt(0).toUpperCase() + field.slice(1) + ' *'}
                     </label>
                     <input
-                      type="text"
-                      name="ciudad"
-                      value={formData.ciudad}
+                      type={field==='email'?'email':field==='telefono'?'tel':'text'}
+                      name={field}
+                      value={formData[field]}
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                      placeholder={field==='nombre'?'Juan Pérez':field==='telefono'?'55 1234 5678':field==='email'?'correo@ejemplo.com':'Ingrese su '+field}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Código Postal *
-                    </label>
-                    <input
-                      type="text"
-                      name="codigoPostal"
-                      value={formData.codigoPostal}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    />
-                  </div>
-                </div>
+                ))}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -210,51 +137,17 @@ export default function CheckoutForm({ product, onClose }) {
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                   >
                     {[...Array(Math.min(5, product.stock))].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} caja{(i + 1) > 1 ? 's' : ''}
-                      </option>
+                      <option key={i + 1} value={i + 1}>{i + 1}</option>
                     ))}
                   </select>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Máximo 5 unidades por compra
-                  </p>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span>Producto:</span>
-                    <span className="font-bold">{product.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Cantidad:</span>
-                    <span className="font-bold">{formData.cantidad}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span className="font-bold">${total} MXN</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Envío:</span>
-                    <span className="font-bold text-green-600">GRATIS</span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between text-lg">
-                    <span className="font-bold">Total:</span>
-                    <span className="font-bold text-purple-600">${total} MXN</span>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <div className="flex items-start gap-2">
-                    <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">Pago seguro con Stripe</p>
-                      <p className="text-xs text-blue-600">
-                        Serás redirigido a Stripe para completar el pago de forma segura.
-                      </p>
-                    </div>
-                  </div>
+                  <div className="flex justify-between"><span>Producto:</span><span className="font-bold">{product.name}</span></div>
+                  <div className="flex justify-between"><span>Cantidad:</span><span className="font-bold">{formData.cantidad}</span></div>
+                  <div className="flex justify-between"><span>Total:</span><span className="font-bold">${total} MXN</span></div>
                 </div>
               </div>
             )}
@@ -263,54 +156,15 @@ export default function CheckoutForm({ product, onClose }) {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full ${getButtonClass(product.platform)} text-white text-lg font-bold py-4 rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2`}
+                className="w-full bg-purple-600 text-white text-lg font-bold py-4 rounded-xl flex items-center justify-center gap-2"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Procesando...
-                  </>
-                ) : step === 1 ? (
-                  'Continuar al Pago'
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    Pagar con Stripe
-                  </>
-                )}
+                {loading ? 'Procesando...' : step === 1 ? 'Continuar al Pago' : 'Pagar con Stripe'}
               </button>
-
-              {step === 2 && (
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="w-full border-2 border-gray-300 text-gray-700 text-lg font-bold py-4 rounded-xl hover:bg-gray-50 transition"
-                >
-                  ← Volver a editar información
-                </button>
-              )}
+              {step===2 && <button type="button" onClick={()=>setStep(1)} className="w-full border-2 border-gray-300 text-gray-700 text-lg font-bold py-4 rounded-xl">← Volver a editar información</button>}
             </div>
           </form>
         </div>
       </div>
     </div>
   );
-}
-
-function getGradientClass(platform) {
-  switch (platform) {
-    case 'aliexpress': return 'bg-gradient-to-r from-blue-500 to-cyan-400';
-    case 'amazon': return 'bg-gradient-to-r from-orange-500 to-yellow-400';
-    case 'mercadolibre': return 'bg-gradient-to-r from-green-500 to-teal-400';
-    default: return 'bg-gradient-to-r from-gray-500 to-gray-400';
-  }
-}
-
-function getButtonClass(platform) {
-  switch (platform) {
-    case 'aliexpress': return 'bg-gradient-to-r from-blue-600 to-cyan-500';
-    case 'amazon': return 'bg-gradient-to-r from-orange-600 to-yellow-500';
-    case 'mercadolibre': return 'bg-gradient-to-r from-green-600 to-teal-500';
-    default: return 'bg-gradient-to-r from-gray-600 to-gray-500';
-  }
 }
