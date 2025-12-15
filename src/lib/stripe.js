@@ -31,11 +31,7 @@ export const redirectToCheckout = async (productId, cantidad, customerData) => {
 };*/
 
 // stripe.js - VERSIÓN FINAL CORREGIDA
-import { loadStripe } from "@stripe/stripe-js";
-
-// SOLO exportamos stripePromise para futuros usos
-export const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
-
+// stripe.js - VERSIÓN CORREGIDA (sin stripePromise)
 const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
 
 // Esta es la ÚNICA función que necesitas
@@ -65,5 +61,5 @@ export const createCheckoutSession = async (productId, cantidad, customerData) =
   }
 };
 
-// ⚠️ NO HAY MÁS FUNCIONES AQUÍ ⚠️
-// NO agregues redirectToCheckout ni ninguna otra función
+// ⚠️ NO exportes stripePromise, NO importes loadStripe
+// Tu CheckoutForm.jsx ya no necesita interactuar con Stripe.js directamente
