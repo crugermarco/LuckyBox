@@ -51,7 +51,10 @@ export default function CheckoutForm({ product, onClose }) {
       // Crear sesión de checkout
       const res = await fetch(`${SUPABASE_FUNCTION_URL}/create-checkout-session`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+        },
         body: JSON.stringify({ 
           productId: product.id,
           cantidad: formData.cantidad,
