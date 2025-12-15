@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { X, Shield, CreditCard } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '../lib/supabase';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
 
 export default function CheckoutForm({ product, onClose }) {
