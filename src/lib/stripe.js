@@ -30,20 +30,24 @@ export const redirectToCheckout = async (productId, cantidad, customerData) => {
   if (error) console.error(error);
 };*/
 
+// stripe.js - ARCHIVO CORRECTO Y ACTUALIZADO
 import { loadStripe } from "@stripe/stripe-js";
-import { supabase } from "./supabase";
 
+// 1. Cargar Stripe con tu clave pública
 export const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+
+// 2. URL base de tu función de Supabase
 const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
 
+// 3. Función PRINCIPAL que sí usarás en CheckoutForm.jsx
 export const createCheckoutSession = async (productId, cantidad, customerData) => {
   try {
     const res = await fetch(`${SUPABASE_FUNCTION_URL}/create-checkout-session`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        // Si tienes autenticación habilitada, agrega el token:
-        // "Authorization": `Bearer ${token}`
+        // Si en el futuro activas autenticación en tu función:
+        // "Authorization": `Bearer ${tu_token_aqui}`
       },
       body: JSON.stringify({ 
         productId, 
@@ -55,31 +59,15 @@ export const createCheckoutSession = async (productId, cantidad, customerData) =
     const data = await res.json();
     
     if (!res.ok) {
-      throw new Error(data.error || "Error al crear sesión de pago");
+      throw new Error(data.error || `Error ${res.status}: No se pudo crear la sesión de pago`);
     }
 
-    return data;
+    return data; // Esto devuelve { success: true, sessionId: "...", url: "..." }
   } catch (error) {
-    console.error("Error creating checkout session:", error);
+    console.error("Error en createCheckoutSession:", error);
     throw error;
   }
 };
 
-export const redirectToCheckout = async (productId, cantidad, customerData) => {
-  try {
-    const stripe = await stripePromise;
-    const { sessionId, url } = await createCheckoutSession(productId, cantidad, customerData);
-    
-    // Redirigir a Stripe
-    if (url) {
-      window.location.href = url;
-    } else if (sessionId) {
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) throw error;
-    }
-  } catch (error) {
-    console.error("Error redirecting to checkout:", error);
-    alert(error.message || "Error al procesar el pago");
-    throw error;
-  }
-};
+// ⚠️ IMPORTANTE: NO exportes ni uses la función "redirectToCheckout".
+// Tu CheckoutForm.jsx ahora maneja la redirección directamente con window.location.href
