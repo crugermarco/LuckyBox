@@ -30,44 +30,40 @@ export const redirectToCheckout = async (productId, cantidad, customerData) => {
   if (error) console.error(error);
 };*/
 
-// stripe.js - ARCHIVO CORRECTO Y ACTUALIZADO
+// stripe.js - VERSIÓN FINAL CORREGIDA
 import { loadStripe } from "@stripe/stripe-js";
 
-// 1. Cargar Stripe con tu clave pública
+// SOLO exportamos stripePromise para futuros usos
 export const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
-// 2. URL base de tu función de Supabase
 const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1`;
 
-// 3. Función PRINCIPAL que sí usarás en CheckoutForm.jsx
+// Esta es la ÚNICA función que necesitas
 export const createCheckoutSession = async (productId, cantidad, customerData) => {
   try {
     const res = await fetch(`${SUPABASE_FUNCTION_URL}/create-checkout-session`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        // Si en el futuro activas autenticación en tu función:
-        // "Authorization": `Bearer ${tu_token_aqui}`
+      headers: {
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ 
-        productId, 
-        cantidad, 
-        customer: customerData 
-      }),
+      body: JSON.stringify({
+        productId,
+        cantidad,
+        customer: customerData
+      })
     });
 
-    const data = await res.json();
-    
     if (!res.ok) {
-      throw new Error(data.error || `Error ${res.status}: No se pudo crear la sesión de pago`);
+      const errorText = await res.text();
+      throw new Error(errorText);
     }
 
-    return data; // Esto devuelve { success: true, sessionId: "...", url: "..." }
+    return await res.json(); // Devuelve { sessionId, url }
   } catch (error) {
     console.error("Error en createCheckoutSession:", error);
     throw error;
   }
 };
 
-// ⚠️ IMPORTANTE: NO exportes ni uses la función "redirectToCheckout".
-// Tu CheckoutForm.jsx ahora maneja la redirección directamente con window.location.href
+// ⚠️ NO HAY MÁS FUNCIONES AQUÍ ⚠️
+// NO agregues redirectToCheckout ni ninguna otra función
