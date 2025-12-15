@@ -67,15 +67,23 @@ export default function CheckoutForm({ product, onClose }) {
         throw new Error(text);
       }
 
-      const { sessionId } = await res.json();
+      // 🛠️ CAMBIO CLAVE AQUÍ: Extraer la 'url' y redirigir directamente
+      const { url, sessionId } = await res.json();
 
-      // Redirigir a Stripe Checkout
-      const stripe = await stripePromise;
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-
-      if (error) {
-        throw error;
+      // Método 1: Redirigir directamente a la URL de Stripe (RECOMENDADO)
+      if (url) {
+        window.location.href = url;
+        return; // Importante: detener la ejecución aquí
       }
+      
+      // Método 2: Backup usando sessionId (por si acaso 'url' no viene)
+      if (sessionId) {
+        window.location.href = `https://checkout.stripe.com/pay/${sessionId}`;
+        return;
+      }
+      
+      // Si no hay ni url ni sessionId, lanzar error
+      throw new Error('No se recibió URL de pago válida');
 
     } catch (err) {
       console.error('Error:', err);
