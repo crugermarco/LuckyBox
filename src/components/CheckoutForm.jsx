@@ -54,9 +54,9 @@ export default function CheckoutForm({ product, onClose }) {
         'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({ 
-          productId: product.id,
-          cantidad: formData.cantidad,
-          customer: formData
+        productId: product.id,
+        cantidad: formData.cantidad,
+        customerData: formData // ✅ AHORA
         }),
       });
 
