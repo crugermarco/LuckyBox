@@ -38,7 +38,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <Gift className="w-9 h-9 text-purple-600" />
             <div>
-              <span className="text-2xl font-bold text-gray-800">SorpresaBox</span>
+              <span className="text-2xl font-bold text-gray-800">MisteryBox</span>
               <p className="text-sm text-gray-500">Cajas misteriosas con productos increíbles</p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl md:text-5xl font-bold mb-3">🎁 ¡Descubre lo Inesperado!</h1>
-          <p className="text-xl mb-6 opacity-90">Cajas sorpresa llenas de productos de tus tiendas favoritas</p>
+          <p className="text-xl mb-6 opacity-90">Cajas Misteriosas llenas de productos de tus tiendas favoritas</p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4">
@@ -102,7 +102,7 @@ export default function Home() {
 
         {/* Beneficios */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 mb-10 text-white">
-          <h2 className="text-3xl font-bold text-center mb-8">🎯 ¿Por qué elegir nuestras cajas sorpresa?</h2>
+          <h2 className="text-3xl font-bold text-center mb-8">🎯 ¿Por qué elegir nuestras cajas misteriosas?</h2>
           
           <div className="grid md:grid-cols-4 gap-6">
             <div className="text-center">
@@ -126,7 +126,7 @@ export default function Home() {
                 <span className="text-2xl">💰</span>
               </div>
               <h3 className="font-bold text-lg mb-2">Valor Increíble</h3>
-              <p className="text-sm opacity-90">Hasta 3x el valor de tu compra</p>
+              <p className="text-sm opacity-90">Hasta 2x el valor de tu compra</p>
             </div>
             
             <div className="text-center">
@@ -143,7 +143,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-lg font-bold mb-2">SorpresaBox 🎁</p>
+          <p className="text-lg font-bold mb-2">MisteryBox 🎁</p>
           <p className="text-gray-400">Descubre lo inesperado en cada caja</p>
           <p className="text-gray-400 text-sm mt-4">© 2024 SorpresaBox. Todos los derechos reservados.</p>
         </div>

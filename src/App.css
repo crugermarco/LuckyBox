@@ -36,3 +36,30 @@
     transform: rotate(360deg);
   }
 }
+
+/* Efecto de gradiente animado */
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+/* Efecto vidrio para PlayStation */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+/* Patrón de brillo para Nintendo */
+.before\:absolute::before {
+  content: '';
+  position: absolute;
+}
+
+.after\:absolute::after {
+  content: '';
+  position: absolute;
+}
