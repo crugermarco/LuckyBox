@@ -3,7 +3,7 @@ const SUPABASE_FUNCTION_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v
 
 export const createCheckoutSession = async (productId, cantidad, customerData) => {
   try {
-    const res = await fetch(`${SUPABASE_FUNCTION_URL}/create-checkout-session`, {
+    const res = await fetch(`${SUPABASE_FUNCTION_URL}/get-session-details`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
